@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>پنل مدیریت هوشمند هکری</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+    body {
+      background: linear-gradient(135deg, #0c0c0e 60%, #222 100%);
+      color: #00ff9f;
+      font-family: 'Share Tech Mono', monospace;
+      margin: 0;
+      padding: 0;
+    }
+    .center {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;
+    }
+    .panel {
+      background: rgba(30,30,30,0.95);
+      padding: 32px 22px;
+      border-radius: 18px;
+      box-shadow: 0 0 30px #00ff9f44;
+      min-width: 320px;
+      max-width: 95vw;
+      margin-bottom: 24px;
+      transition: box-shadow 0.3s;
+    }
+    h2, h3 { color: #00ffea; margin: 0 0 24px 0; }
+    input[type="password"], input[type="text"], textarea {
+      padding: 10px; border-radius: 8px; border: none; width: 100%; font-size: 16px;
+      margin-bottom: 12px; background: #222; color: #00ff9f;
+      font-family: inherit;
+    }
+    button {
+      background: #00ff9f; color: #111; padding: 8px 20px; border: none; border-radius: 8px;
+      font-size: 16px; cursor: pointer; margin-top: 4px; margin-bottom: 6px; font-weight: bold;
+      box-shadow: 0 2px 14px #00ff9f55;
+      transition: background 0.2s;
+    }
+    button:hover { background: #00ffea; }
+    .error { color: #ff0040; margin-bottom: 14px; font-weight: bold;}
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { background: #222; margin: 8px 0; padding: 8px 16px; border-radius: 8px;}
+    .info-box { background: #181818dd; border-left: 4px solid #00ff9f; padding: 10px 16px; margin-bottom: 16px;}
+    .section { margin-bottom: 36px; }
+    .divider { border-bottom: 2px dashed #00ff9f44; margin: 16px 0;}
+    #console-animation {
+      font-size: 18px; color: #00ffea; background: #1a1a1a; padding: 10px 18px;
+      border-radius: 8px; font-family: 'Share Tech Mono', monospace; margin-bottom: 24px;
+      min-height: 32px; letter-spacing: 1.5px;
+    }
+    .flex-row { display: flex; flex-wrap: wrap; gap: 18px; }
+    .film-box, .notes-box, .ai-box { flex: 1 1 240px; background: #141414ee;
+      border: 1px solid #00ff9f55; padding: 16px; border-radius: 12px; margin-bottom: 16px;}
+    .film-list li { background: #222; margin: 8px 0; padding: 8px 16px; border-radius: 8px;}
+    .search-input { margin-bottom: 12px; }
+    .logout-btn { float: left; background: #ff0040; color: #fff; margin-right: 10px;}
+    .tab-btns { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tab-btn { background: #181818; color: #00ff9f; border: 1px solid #00ff9f44; border-radius: 8px; padding: 8px 16px; cursor: pointer;}
+    .tab-btn.active, .tab-btn:active { background: #00ff9f; color: #181818;}
+    .ai-chat-history { max-height: 200px; overflow-y: auto; background: #222; border-radius: 8px; padding: 8px; margin-bottom: 8px;}
+    .ai-msg-user { color: #00c3ff; margin: 0 2px;}
+    .ai-msg-bot { color: #00ff9f; margin: 0 2px;}
+    @media (max-width: 800px){
+      .panel { min-width: 98vw;}
+      .flex-row { flex-direction: column; gap: 0;}
+      .tab-btns { flex-direction: column;}
+    }
+  </style>
+</head>
+<body>
+  <div class="center">
+    <div id="login" class="panel">
+      <h2>ورود به پنل فوق پیشرفته</h2>
+      <div id="error" class="error"></div>
+      <input type="password" id="password" placeholder="رمز عبور را وارد کنید">
+      <button onclick="login()">ورود</button>
+    </div>
+    <div id="admin-panel" class="panel" style="display:none;">
+      <button class="logout-btn" onclick="logout()">خروج</button>
+      <h2>پنل مدیریت هوشمند</h2>
+      <div id="console-animation"></div>
+      <div class="tab-btns">
+        <button class="tab-btn active" onclick="showTab('main')">اطلاعات سیستم</button>
+        <button class="tab-btn" onclick="showTab('films')">فیلم‌های هکری</button>
+        <button class="tab-btn" onclick="showTab('notes')">یادداشت‌ها</button>
+        <button class="tab-btn" onclick="showTab('ai')">پنل هوش مصنوعی 🤖</button>
+      </div>
+      <div id="tab-main" class="tab-section">
+        <div class="section info-box">
+          <b>اطلاعات سیستم:</b>
+          <ul>
+            <li>تاریخ و ساعت: <span id="date"></span></li>
+            <li>IP کاربر: <span id="user-ip">در حال دریافت...</span></li>
+            <li>وضعیت سرور: <span style="color:lime;">فعال</span></li>
+            <li>فضای دیسک: <span id="disk">72% پر</span></li>
+            <li>تعداد بازدیدها: <span id="views">1</span></li>
+          </ul>
+        </div>
+        <div class="section info-box">
+          <b>پیام امنیتی:</b>
+          <div id="security-msg">دسترسی به این پنل فقط برای شما مجاز است.</div>
+        </div>
+      </div>
+      <div id="tab-films" class="tab-section" style="display:none;">
+        <div class="film-box">
+          <h3>فیلم‌های هکری پیشنهادی</h3>
+          <input class="search-input" type="text" id="film-search" placeholder="جستجو فیلم..." oninput="searchFilms()">
+          <ul id="film-list" class="film-list"></ul>
+        </div>
+      </div>
+      <div id="tab-notes" class="tab-section" style="display:none;">
+        <div class="notes-box">
+          <h3>یادداشت‌ها</h3>
+          <ul id="notes-list">
+            <li>برای افزودن یادداشت، متن خود را در کادر زیر وارد کنید.</li>
+          </ul>
+          <input type="text" id="note-input" placeholder="یادداشت جدید..." maxlength="80">
+          <button onclick="addNote()">افزودن یادداشت</button>
+        </div>
+      </div>
+      <div id="tab-ai" class="tab-section" style="display:none;">
+        <div class="ai-box">
+          <h3>پنل هوش مصنوعی 🤖</h3>
+          <div class="ai-chat-history" id="ai-chat-history"></div>
+          <textarea id="ai-question" rows="2" placeholder="سوال یا درخواست خود را بنویسید..."></textarea>
+          <button onclick="aiAsk()">ارسال به هوش مصنوعی</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // رمز عبور
+    const PASSWORD = "Mehrshad01A";
+    // لیست فیلم‌ها
+    const films = [
+      "Mr. Robot", "Matrix", "Hackers", "Snowden", "Blackhat",
+      "Swordfish", "Who Am I", "Live Free or Die Hard", "The Imitation Game", "Open Windows"
+    ];
+    let notes = [];
+    let viewCount = localStorage.getItem("panel-views") || 0;
+
+    // تب‌ها
+    function showTab(tab){
+      document.querySelectorAll('.tab-section').forEach(el=>el.style.display='none');
+      document.getElementById('tab-'+tab).style.display='block';
+      document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+      document.querySelector('.tab-btns .tab-btn:nth-child('+
+        (tab=='main'?1:tab=='films'?2:tab=='notes'?3:4)+')').classList.add('active');
+    }
+
+    function login() {
+      var pass = document.getElementById('password').value;
+      var errorDiv = document.getElementById('error');
+      if (pass === PASSWORD) {
+        document.getElementById('login').style.display = "none";
+        document.getElementById('admin-panel').style.display = "block";
+        document.getElementById('date').textContent = getDateTime();
+        updateFilmList();
+        updateViews();
+        showConsoleAnimation();
+        fetchIP();
+        renderNotes();
+        showTab('main');
+      } else {
+        errorDiv.textContent = "رمز اشتباه است!";
+      }
+    }
+
+    function logout(){
+      document.getElementById('admin-panel').style.display="none";
+      document.getElementById('login').style.display="block";
+      document.getElementById('password').value="";
+      document.getElementById('error').textContent="";
+    }
+
+    function getDateTime() {
+      const now = new Date();
+      return now.toLocaleString('fa-IR');
+    }
+
+    // افکت کنسول هکری
+    function showConsoleAnimation(){
+      const el = document.getElementById("console-animation");
+      const messages = [
+        "در حال بارگذاری پنل مدیریتی...",
+        "تایید دسترسی...",
+        "اتصال به سرور اصلی برقرار شد.",
+        "اطلاعات سیستم دریافت شد.",
+        "ورود موفقیت آمیز! خوش آمدید."
+      ];
+      let i=0;
+      el.textContent="";
+      function nextMsg(){
+        if(i < messages.length){
+          typeWriter(el, messages[i], 0, () => setTimeout(nextMsg, 800));
+          i++;
+        }
+      }
+      nextMsg();
+    }
+    function typeWriter(el, text, i, cb){
+      if(i<text.length){
+        el.textContent += text[i];
+        setTimeout(()=>typeWriter(el, text, i+1, cb), 30);
+      }else if(cb) cb();
+    }
+
+    // فیلم‌ها
+    function updateFilmList(filmSearch=''){
+      const ul = document.getElementById("film-list");
+      ul.innerHTML = "";
+      films.filter(f => f.toLowerCase().includes(filmSearch.toLowerCase()))
+        .forEach(f => {
+          const li = document.createElement("li");
+          li.textContent = f;
+          ul.appendChild(li);
+        });
+      if(ul.childNodes.length===0){
+        ul.innerHTML="<li>نتیجه‌ای یافت نشد 🕵️</li>";
+      }
+    }
+    function searchFilms(){
+      const val = document.getElementById("film-search").value;
+      updateFilmList(val);
+    }
+
+    // یادداشت‌ها
+    function addNote(){
+      const noteInput = document.getElementById("note-input");
+      const note = noteInput.value.trim();
+      if(note){
+        notes.push(note);
+        renderNotes();
+        noteInput.value="";
+      }
+    }
+    function renderNotes(){
+      const ul = document.getElementById("notes-list");
+      ul.innerHTML = "";
+      notes.forEach(n=>{
+        const li = document.createElement("li");
+        li.textContent = n;
+        ul.appendChild(li);
+      });
+      if(notes.length===0){
+        ul.innerHTML="<li>برای افزودن یادداشت، متن خود را در کادر زیر وارد کنید.</li>";
+      }
+    }
+
+    // بازدیدها
+    function updateViews(){
+      viewCount++;
+      localStorage.setItem("panel-views", viewCount);
+      document.getElementById("views").textContent = viewCount;
+    }
+
+    // IP کاربر (API عمومی)
+    function fetchIP(){
+      fetch("https://api.ipify.org?format=json")
+        .then(r=>r.json())
+        .then(d=>{
+          document.getElementById("user-ip").textContent = d.ip;
+        })
+        .catch(()=>{document.getElementById("user-ip").textContent="نامشخص";});
+    }
+
+    // نمایش تاریخ و ساعت لحظه‌ای
+    setInterval(()=>{
+      if(document.getElementById("admin-panel").style.display==="block"){
+        document.getElementById('date').textContent = getDateTime();
+      }
+    }, 1000);
+
+    // ذخیره یادداشت‌ها در مرورگر
+    window.onload = function(){
+      if(localStorage.getItem("panel-notes")){
+        notes = JSON.parse(localStorage.getItem("panel-notes"));
+        renderNotes();
+      }
+    }
+    window.onbeforeunload = function(){
+      localStorage.setItem("panel-notes", JSON.stringify(notes));
+    }
+
+    // هوش مصنوعی (نمونه ساده)
+    let aiHistory = [];
+    function aiAsk(){
+      const q = document.getElementById('ai-question').value.trim();
+      if(!q) return;
+      aiHistory.push({role:'user',content:q});
+      renderAIHistory();
+      document.getElementById('ai-question').value = '';
+      // پاسخ نمونه آزمایشی (می‌توانید بعداً به API وصل کنید!)
+      setTimeout(()=>{
+        let reply = aiFakeReply(q);
+        aiHistory.push({role:'bot',content: reply});
+        renderAIHistory();
+      }, 900);
+    }
+    function renderAIHistory(){
+      const box = document.getElementById('ai-chat-history');
+      box.innerHTML = '';
+      aiHistory.forEach(msg=>{
+        const div = document.createElement('div');
+        div.className = msg.role === 'user' ? 'ai-msg-user' : 'ai-msg-bot';
+        div.textContent = (msg.role === 'user' ? "شما: " : "هوش مصنوعی: ") + msg.content;
+        box.appendChild(div);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+    // پاسخ تست هوش مصنوعی
+    function aiFakeReply(q){
+      if(q.includes("سلام")) return "سلام! چه کمکی از دستم برمی‌آید؟";
+      if(q.includes("معرفی فیلم")) return "فیلم‌های هکری عالی: Mr. Robot، Matrix، Hackers، Snowden.";
+      if(q.length<10) return "لطفاً سوال خود را واضح‌تر مطرح کنید.";
+      return "پاسخ هوش مصنوعی به سوال شما: " + q.split(' ').reverse().join(' ');
+    }
+  </script>
+</body>
+</html>
